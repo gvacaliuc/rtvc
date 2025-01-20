@@ -1,0 +1,13 @@
+[project]
+name = "rtvc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.115.6",
+    "pydantic>=2.10.5",
+    "twilio>=9.4.3",
+    "uvicorn>=0.34.0",
+    "websockets>=14.2",
+]
