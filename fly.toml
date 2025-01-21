@@ -10,6 +10,15 @@ primary_region = 'dfw'
   auto_start_machines = true
   min_machines_running = 0
 
+  [[http_service.checks]]
+    type = "http"
+    path = "/health"
+    method = "get"
+    interval = "10s"   # Check every 10 seconds
+    timeout = "2s"     # Timeout after 2 seconds
+    grace_period = "5s" # Allow 5 seconds after app deployment to pass the check
+    restart_limit = 3   # Restart the app after 3 consecutive failures
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
