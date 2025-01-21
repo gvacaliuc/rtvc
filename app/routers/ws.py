@@ -2,13 +2,13 @@ import json
 import base64
 import asyncio
 
-from fastapi import APIRouter, WebSocket
+from fastapi import FastAPI, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 import websockets
 
 from ..config import *
 
-router = APIRouter()
+app = FastAPI()
 
 SYSTEM_MESSAGE = (
     "You are a helpful and bubbly AI assistant who loves to chat about "
@@ -31,7 +31,7 @@ LOG_EVENT_TYPES = [
     'input_audio_buffer.speech_started', 'session.created'
 ]
 
-@router.websocket('/media-stream')
+@app.websocket('/media-stream')
 async def handle_media_stream(websocket: WebSocket):
     """Handle WebSocket connections between Twilio and OpenAI."""
     # NOTE:

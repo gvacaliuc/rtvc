@@ -46,7 +46,7 @@ async def make_call(phone_number_to_call: str) -> str:
     # TODO: url needs to match domain + router path
     outbound_twiml = (
         f'<?xml version="1.0" encoding="UTF-8"?>'
-        f'<Response><Connect><Stream url="wss://{DOMAIN}/media-stream" /></Connect></Response>'
+        f'<Response><Connect><Stream url="wss://{DOMAIN}/ws/media-stream" /></Connect></Response>'
     )
 
     call = client.calls.create(

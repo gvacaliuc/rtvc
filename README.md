@@ -6,7 +6,7 @@ https://rtvc.fly.dev - testbed for realtime voice calling (rtvc)
 
 List of things to resolve in order of priority before sharing this out.
 
-1. [ ] JSON API authentication
+1. [x] JSON API authentication
     * https://www.starlette.io/authentication/
     * https://chatgpt.com/share/678ebb6b-0cb4-800e-a598-122399435b18
 1. [ ] websocket authentication (validate that only twilio makes requests)

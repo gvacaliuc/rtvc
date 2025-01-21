@@ -1,3 +1,5 @@
+from typing import Dict
+import json
 import os
 
 # Configuration
@@ -9,3 +11,13 @@ DOMAIN=os.getenv('DOMAIN')
 
 if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and PHONE_NUMBER_FROM and OPENAI_API_KEY and DOMAIN):
     raise ValueError('Missing Twilio and/or OpenAI environment variables. Please set them in the .env file.')
+
+# Read user database from environment variable
+AUTHN_DATABASE = os.getenv("AUTHN_DATABASE")
+if not AUTHN_DATABASE:
+    raise ValueError("Environment variable AUTHN_DATABASE is required.")
+
+try:
+    users_db: Dict[str, str] = json.loads(AUTHN_DATABASE)
+except json.JSONDecodeError:
+    raise ValueError("AUTHN_DATABASE must be valid JSON.")
