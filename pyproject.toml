@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "bcrypt>=4.2.1",
     "fastapi[standard]>=0.115.6",
     "pydantic>=2.10.5",
     "twilio>=9.4.3",
@@ -14,5 +15,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "bcrypt>=4.2.1",
+    "python-dotenv>=1.0.1",
 ]
