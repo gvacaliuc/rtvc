@@ -24,4 +24,4 @@ FROM python:3.13-slim
 COPY --from=builder --chown=app:app /app/ /app/
 
 # Run the application
-CMD ["/app/.venv/bin/fastapi", "run", "/app/main.py"]
+CMD ["/app/.venv/bin/fastapi", "run", "/app/app/main.py"]

@@ -1,22 +1,14 @@
-import os
 import json
 import base64
 import asyncio
 
-from pydantic import BaseModel
-from fastapi import FastAPI, WebSocket
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
-from twilio.rest import Client
 import websockets
 
+from ..config import *
 
-# Configuration
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
-PHONE_NUMBER_FROM = os.getenv('PHONE_NUMBER_FROM')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-DOMAIN=os.getenv('DOMAIN')
+router = APIRouter()
 
 SYSTEM_MESSAGE = (
     "You are a helpful and bubbly AI assistant who loves to chat about "
@@ -28,6 +20,7 @@ SYSTEM_MESSAGE = (
 # TODO: experiment w/ this
 VOICE = 'alloy'
 
+# TODO: experiment w/ this, i think there is a mini model
 # https://platform.openai.com/docs/models#gpt-4o-realtime 
 MODEL = 'gpt-4o-realtime-preview-2024-12-17'
 
@@ -38,19 +31,7 @@ LOG_EVENT_TYPES = [
     'input_audio_buffer.speech_started', 'session.created'
 ]
 
-app = FastAPI()
-
-if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and PHONE_NUMBER_FROM and OPENAI_API_KEY and DOMAIN):
-    raise ValueError('Missing Twilio and/or OpenAI environment variables. Please set them in the .env file.')
-
-# Initialize Twilio client
-client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-
-@app.get('/', response_class=JSONResponse)
-async def index_page():
-    return {"message": "Twilio Media Stream Server is running!"}
-
-@app.websocket('/media-stream')
+@router.websocket('/media-stream')
 async def handle_media_stream(websocket: WebSocket):
     """Handle WebSocket connections between Twilio and OpenAI."""
     # NOTE:
@@ -174,66 +155,3 @@ async def initialize_session(openai_ws):
 
     # Have the AI speak first
     await send_initial_conversation_item(openai_ws)
-
-# NOTE:
-# * code below initiates outbound call with twilio from an API request
-
-async def check_number_allowed(to):
-    """Check if a number is allowed to be called."""
-    try:
-        # Uncomment these lines to test numbers. Only add numbers you have permission to call
-        # OVERRIDE_NUMBERS = ['+18005551212'] 
-        # if to in OVERRIDE_NUMBERS:             
-          # return True
-
-        incoming_numbers = client.incoming_phone_numbers.list(phone_number=to)
-        if incoming_numbers:
-            return True
-
-        outgoing_caller_ids = client.outgoing_caller_ids.list(phone_number=to)
-        if outgoing_caller_ids:
-            return True
-
-        return False
-    except Exception as e:
-        print(f"Error checking phone number: {e}")
-        return False
-
-async def make_call(phone_number_to_call: str) -> str:
-    """Make an outbound call."""
-    if not phone_number_to_call:
-        raise ValueError("Please provide a phone number to call.")
-
-    is_allowed = await check_number_allowed(phone_number_to_call)
-    if not is_allowed:
-        raise ValueError(f"The number {phone_number_to_call} is not recognized as a valid outgoing number or caller ID.")
-
-    # Ensure compliance with applicable laws and regulations
-    # All of the rules of TCPA apply even if a call is made by AI.
-    # Do your own diligence for compliance.
-
-    outbound_twiml = (
-        f'<?xml version="1.0" encoding="UTF-8"?>'
-        f'<Response><Connect><Stream url="wss://{DOMAIN}/media-stream" /></Connect></Response>'
-    )
-
-    call = client.calls.create(
-        from_=PHONE_NUMBER_FROM,
-        to=phone_number_to_call,
-        twiml=outbound_twiml
-    )
-
-    assert call.sid is not None, "invalid call SID"
-
-    return call.sid
-
-class CallRequest(BaseModel):
-    number: str
-
-class CallResponse(BaseModel):
-    twilio_call_sid: str
-
-@app.post("/call")
-async def start_call_handler(request: CallRequest) -> CallResponse:
-    sid = await make_call(request.number)
-    return CallResponse(twilio_call_sid=sid)

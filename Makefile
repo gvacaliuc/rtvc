@@ -1,2 +1,2 @@
 up:
-	cat .env | xargs -J % env % .venv/bin/fastapi dev main.py
+	cat .env | xargs -J % env % .venv/bin/fastapi dev app/main.py
