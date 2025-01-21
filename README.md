@@ -2,9 +2,18 @@
 
 https://rtvc.fly.dev - testbed for realtime voice calling (rtvc)
 
+The following gets an OpenAI realtime voice model to call you!
+
+```shell
+curl \
+  -u $USERNAME:$PASSWORD \
+  -d "{\"number\": $NUMBER}"
+  https://rtvc.fly.dev/api/v1/call
+```
+
 ## TODO
 
-List of things to resolve in order of priority before sharing this out.
+List of things to resolve in order of priority before we can iterate:
 
 1. [x] JSON API authentication
     * https://www.starlette.io/authentication/
