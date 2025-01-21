@@ -6,8 +6,9 @@ The following gets an OpenAI realtime voice model to call you!
 
 ```shell
 curl \
-  -u $USERNAME:$PASSWORD \
-  -d "{\"number\": $NUMBER}"
+  -u $RTVC_USERNAME:$RTVC_PASSWORD \
+  -H "Content-type: application/json" \
+  -d "{\"number\": \"$NUMBER\"}" \
   https://rtvc.fly.dev/api/v1/call
 ```
 
