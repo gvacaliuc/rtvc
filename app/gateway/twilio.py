@@ -2,14 +2,14 @@ from twilio.rest import Client
 from twilio.request_validator import RequestValidator
 
 # TODO: maybe make as parameter
-from ..config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM
+from ..config import DOMAIN, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM
 
 # Initialize Twilio client
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 request_validator = RequestValidator(TWILIO_AUTH_TOKEN)
 
-media_stream_url = "wss://{DOMAIN}/ws/media-stream"
+media_stream_url = f"wss://{DOMAIN}/ws/media-stream"
 
 # NOTE:
 # * code below initiates outbound call with twilio from an API request
