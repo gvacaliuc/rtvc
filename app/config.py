@@ -9,19 +9,14 @@ def _must_getenv(name: str) -> str:
     return value
 
 # Configuration
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
-PHONE_NUMBER_FROM = os.getenv('PHONE_NUMBER_FROM')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-DOMAIN=os.getenv('DOMAIN')
-
-if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and PHONE_NUMBER_FROM and OPENAI_API_KEY and DOMAIN):
-    raise ValueError('Missing Twilio and/or OpenAI environment variables. Please set them in the .env file.')
+TWILIO_ACCOUNT_SID = _must_getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = _must_getenv('TWILIO_AUTH_TOKEN')
+PHONE_NUMBER_FROM = _must_getenv('PHONE_NUMBER_FROM')
+OPENAI_API_KEY = _must_getenv('OPENAI_API_KEY')
+DOMAIN=_must_getenv('DOMAIN')
 
 # Read user database from environment variable
-AUTHN_DATABASE = os.getenv("AUTHN_DATABASE")
-if not AUTHN_DATABASE:
-    raise ValueError("Environment variable AUTHN_DATABASE is required.")
+AUTHN_DATABASE = _must_getenv("AUTHN_DATABASE")
 
 try:
     users_db: Dict[str, str] = json.loads(AUTHN_DATABASE)

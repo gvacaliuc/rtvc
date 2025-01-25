@@ -1,3 +1,4 @@
+from fastapi import WebSocket, HTTPException
 from twilio.rest import Client
 from twilio.request_validator import RequestValidator
 
@@ -6,8 +7,6 @@ from ..config import DOMAIN, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER
 
 # Initialize Twilio client
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-
-request_validator = RequestValidator(TWILIO_AUTH_TOKEN)
 
 media_stream_url = f"wss://{DOMAIN}/ws/media-stream"
 
@@ -63,3 +62,34 @@ async def make_call(phone_number_to_call: str) -> str:
     assert call.sid is not None, "invalid call SID"
 
     return call.sid
+
+
+_WEBSOCKET_POLICY_VIOLATION = 1008
+_HTTP_BAD_REQUEST = 400
+_HTTP_FORBIDDEN = 403
+_request_validator = RequestValidator(TWILIO_AUTH_TOKEN)
+
+
+async def validate_media_stream(websocket: WebSocket):
+    """
+    Validates that the websocket was initiated by Twilio.
+    """
+
+    headers = websocket.headers
+
+    # NOTE: we don't handle SSL termination within this application (thanks
+    # fly!), so the websocket URL reported by fastapi has incorrect protocol.
+    url = str(websocket.url).replace("ws://", "wss://")
+
+    # TODO: always empty rn, not sure if we should be using these or just {}
+    params = websocket.query_params
+
+    twilio_signature = headers.get("X-Twilio-Signature")
+
+    if not twilio_signature:
+        await websocket.close(code=_WEBSOCKET_POLICY_VIOLATION)
+        raise HTTPException(status_code=_HTTP_BAD_REQUEST, detail="Missing Twilio signature.")
+
+    if not _request_validator.validate(url, params, twilio_signature):
+        await websocket.close(code=_WEBSOCKET_POLICY_VIOLATION)
+        raise HTTPException(status_code=_HTTP_FORBIDDEN, detail="Invalid Twilio signature.")
