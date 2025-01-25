@@ -43,10 +43,10 @@ async def make_call(phone_number_to_call: str) -> str:
     # All of the rules of TCPA apply even if a call is made by AI.
     # Do your own diligence for compliance.
 
-    # TODO: url needs to match domain + router path
+    # TODO: url needs to match domain + router path, move this stuff over there
     outbound_twiml = (
         f'<?xml version="1.0" encoding="UTF-8"?>'
-        f'<Response><Connect><Stream url="wss://{RTVC_TWILIO_USER_USERNAME}:{RTVC_TWILIO_USER_PASSWORD}@{DOMAIN}/ws/media-stream" /></Connect></Response>'
+        f'<Response><Connect><Stream url="wss://{DOMAIN}/ws/media-stream" /></Connect></Response>'
     )
 
     call = client.calls.create(
