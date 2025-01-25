@@ -6,7 +6,7 @@ from ..authn import BasicAuthBackend
 from ..gateway.twilio import make_call
 
 app = FastAPI()
-app.add_middleware(AuthenticationMiddleware, backend=BasicAuthBackend(), on_error=BasicAuthBackend.on_auth_error)
+app.add_middleware(AuthenticationMiddleware, backend=BasicAuthBackend(["admin"]), on_error=BasicAuthBackend.on_auth_error)
 
 class CallRequest(BaseModel):
     number: str

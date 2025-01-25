@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Set, List
 import bcrypt
 import secrets
 
@@ -19,8 +19,14 @@ from .config import users_db
 class UnauthorizedError(AuthenticationError):
     pass
 
+class ForbiddenError(AuthenticationError):
+    pass
 
 class BasicAuthBackend(AuthenticationBackend):
+    _allowed_users: Set[str]
+    def __init__(self, allowed_users: List[str]):
+        self._allowed_users = set(allowed_users)
+
     async def authenticate(self, conn):
         if "Authorization" not in conn.headers:
             raise UnauthorizedError("No authentication provided.")
@@ -35,13 +41,21 @@ class BasicAuthBackend(AuthenticationBackend):
             raise UnauthorizedError("Invalid credential format.")
 
         username, _, password = decoded.partition(":")
+        creds, user = _authenticate(username, password)
 
-        return _authenticate(username, password)
+        if user.display_name not in self._allowed_users:
+            raise ForbiddenError()
+
+        return creds, user
 
     @staticmethod
     def on_auth_error(_: HTTPConnection, exc: Exception) -> Response:
-        assert isinstance(exc, UnauthorizedError), "unrecognized auth error"
-        return JSONResponse({"error": str(exc)}, status_code=401)
+        status_code = 401
+        match exc:
+            case UnauthorizedError(): status_code = 401
+            case ForbiddenError(): status_code = 403
+            case _: raise AssertionError(f"unrecognized authentication error: {exc}")
+        return JSONResponse({"error": str(exc)}, status_code=status_code)
 
 def _authenticate(username: str, password: str) -> Tuple[AuthCredentials, BaseUser]:
     for cu, cpw in users_db.items():

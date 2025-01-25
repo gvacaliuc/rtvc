@@ -4,11 +4,14 @@ import asyncio
 
 from fastapi import FastAPI, WebSocket
 from fastapi.websockets import WebSocketDisconnect
+from starlette.middleware.authentication import AuthenticationMiddleware
 import websockets
 
+from ..authn import BasicAuthBackend
 from ..config import *
 
 app = FastAPI()
+app.add_middleware(AuthenticationMiddleware, backend=BasicAuthBackend(["twilio"]), on_error=BasicAuthBackend.on_auth_error)
 
 SYSTEM_MESSAGE = (
     "You are a helpful and bubbly AI assistant who loves to chat about "

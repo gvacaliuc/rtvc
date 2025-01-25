@@ -1,7 +1,7 @@
 from twilio.rest import Client
 
 # TODO: maybe make as parameter
-from ..config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM, DOMAIN
+from ..config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM, DOMAIN, RTVC_TWILIO_USER_USERNAME, RTVC_TWILIO_USER_PASSWORD
 
 # Initialize Twilio client
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
@@ -46,7 +46,7 @@ async def make_call(phone_number_to_call: str) -> str:
     # TODO: url needs to match domain + router path
     outbound_twiml = (
         f'<?xml version="1.0" encoding="UTF-8"?>'
-        f'<Response><Connect><Stream url="wss://{DOMAIN}/ws/media-stream" /></Connect></Response>'
+        f'<Response><Connect><Stream url="wss://{RTVC_TWILIO_USER_USERNAME}:{RTVC_TWILIO_USER_PASSWORD}@{DOMAIN}/ws/media-stream" /></Connect></Response>'
     )
 
     call = client.calls.create(
