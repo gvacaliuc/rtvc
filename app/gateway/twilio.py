@@ -1,10 +1,15 @@
 from twilio.rest import Client
+from twilio.request_validator import RequestValidator
 
 # TODO: maybe make as parameter
-from ..config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM, DOMAIN, RTVC_TWILIO_USER_USERNAME, RTVC_TWILIO_USER_PASSWORD
+from ..config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM
 
 # Initialize Twilio client
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+
+request_validator = RequestValidator(TWILIO_AUTH_TOKEN)
+
+media_stream_url = "wss://{DOMAIN}/ws/media-stream"
 
 # NOTE:
 # * code below initiates outbound call with twilio from an API request
@@ -46,7 +51,7 @@ async def make_call(phone_number_to_call: str) -> str:
     # TODO: url needs to match domain + router path, move this stuff over there
     outbound_twiml = (
         f'<?xml version="1.0" encoding="UTF-8"?>'
-        f'<Response><Connect><Stream url="wss://{DOMAIN}/ws/media-stream" /></Connect></Response>'
+        f'<Response><Connect><Stream url="{media_stream_url}" /></Connect></Response>'
     )
 
     call = client.calls.create(
@@ -58,4 +63,3 @@ async def make_call(phone_number_to_call: str) -> str:
     assert call.sid is not None, "invalid call SID"
 
     return call.sid
-

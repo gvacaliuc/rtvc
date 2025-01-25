@@ -2,13 +2,13 @@ import json
 import base64
 import asyncio
 
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.websockets import WebSocketDisconnect
-from starlette.middleware.authentication import AuthenticationMiddleware
 import websockets
 
-from ..authn import BasicAuthBackend
+from ..authn import UnauthorizedError
 from ..config import *
+from ..gateway.twilio import request_validator
 
 app = FastAPI()
 
@@ -42,6 +42,18 @@ async def handle_media_stream(websocket: WebSocket):
     # 3. we pass audio messages back and forth
     print("Client connected")
     await websocket.accept()
+
+    # TODO: also perform authentication here
+
+    headers = websocket.headers
+    twilio_signature = headers.get("X-Twilio-Signature")
+    if not twilio_signature:
+        await websocket.close(code=1008)  # Policy violation code
+        raise HTTPException(status_code=400, detail="Missing Twilio signature.")
+
+    if not request_validator.validate(str(websocket.url), {}, twilio_signature):  # Empty dictionary for body params in WebSocket
+        await websocket.close(code=1008)  # Policy violation code
+        raise HTTPException(status_code=403, detail="Invalid Twilio signature.")
 
     async with websockets.connect(
         f'wss://api.openai.com/v1/realtime?model={MODEL}',
