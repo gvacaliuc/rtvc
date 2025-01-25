@@ -19,7 +19,7 @@ List of things to resolve in order of priority before we can iterate:
 1. [x] JSON API authentication
     * https://www.starlette.io/authentication/
     * https://chatgpt.com/share/678ebb6b-0cb4-800e-a598-122399435b18
-1. [ ] websocket authentication (validate that only twilio makes requests)
+1. [x] validate that only twilio makes websocket requests
     * https://www.twilio.com/docs/usage/webhooks/webhooks-security#validating-signatures-from-twilio
 1. [ ] add some request parameters to control:
     * system message
