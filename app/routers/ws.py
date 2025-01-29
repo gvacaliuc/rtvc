@@ -87,7 +87,9 @@ async def handle_media_stream(websocket: WebSocket):
                         await openai_ws.send(json.dumps(audio_append))
                     elif data['event'] == 'start':
                         stream_sid = data['start']['streamSid']
+                        custom_parameters = data['start'].get("customParameters")
                         print(f"Incoming stream has started {stream_sid}")
+                        print(f"custom parameters: {custom_parameters}")
             except WebSocketDisconnect | websockets.ConnectionClosed:
                 print("Client disconnected.")
                 # TODO: remove state check?
