@@ -9,6 +9,7 @@ import websockets
 from app.gateway import twilio
 
 from ..config import *
+from .. import pydantic64
 
 app = FastAPI()
 
@@ -47,6 +48,12 @@ async def handle_media_stream(websocket: WebSocket):
 
     # authenticate caller
     await twilio.validate_media_stream(websocket)
+
+    print(f"query params: {websocket.query_params}")
+    request_encoded = websocket.query_params.get("request")
+    if request_encoded is not None:
+        request = pydantic64.decode(request_encoded, klass=twilio.MakeCallRequest)
+        print(f"request: {request}")
 
     async with websockets.connect(
         f'wss://api.openai.com/v1/realtime?model={MODEL}',
