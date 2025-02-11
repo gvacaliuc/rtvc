@@ -90,6 +90,10 @@ async def handle_media_stream(websocket: WebSocket):
                         custom_parameters = data['start'].get("customParameters")
                         print(f"Incoming stream has started {stream_sid}")
                         print(f"custom parameters: {custom_parameters}")
+                        # TODO: we need to initialize the OpenAI session after
+                        # receiving this start message to include the system
+                        # message + first message we get in the custom
+                        # parameters.
             except WebSocketDisconnect | websockets.ConnectionClosed:
                 print("Client disconnected.")
                 # TODO: remove state check?
