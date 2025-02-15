@@ -10,10 +10,8 @@ shell:
 test:
 	uv run pytest
 
-format:
-	uv run ruff format
-
 lint:
+	uv run ruff format --check
 	uv run ruff check --fix
 
 set-secrets:
