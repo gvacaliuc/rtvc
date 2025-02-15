@@ -1,9 +1,7 @@
-from typing import Optional, Tuple, Set, List
+from typing import Tuple, Set, List
 import bcrypt
 import secrets
 
-from starlette.applications import Starlette
-from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.authentication import (
     AuthCredentials,
@@ -13,8 +11,6 @@ from starlette.authentication import (
     SimpleUser,
 )
 from starlette.requests import HTTPConnection
-from starlette.responses import PlainTextResponse
-from starlette.routing import Route
 import base64
 import binascii
 
@@ -76,4 +72,4 @@ def _authenticate(username: str, password: str) -> Tuple[AuthCredentials, BaseUs
         ):
             return AuthCredentials([]), SimpleUser(username)
 
-    raise UnauthorizedError(f"Invalid credentials.")
+    raise UnauthorizedError("Invalid credentials.")

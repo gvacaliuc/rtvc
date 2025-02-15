@@ -14,7 +14,7 @@ format:
 	uv run ruff format
 
 lint:
-	uv run ruff check
+	uv run ruff check --fix
 
 set-secrets:
 	cat .env | tr -d "'" | fly secrets import
