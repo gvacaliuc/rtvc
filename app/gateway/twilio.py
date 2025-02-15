@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import WebSocket, HTTPException
 from pydantic import BaseModel, Field
@@ -7,8 +7,8 @@ from twilio.rest import Client
 from twilio.request_validator import RequestValidator
 
 # TODO: maybe make as parameter
-from ..config import DOMAIN, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM
-from .. import pydantic64
+from app.models.contact import PhoneNumber
+from app.config import DOMAIN, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, PHONE_NUMBER_FROM
 
 media_stream_url = f"wss://{DOMAIN}/ws/media-stream"
 
@@ -19,21 +19,26 @@ media_stream_url = f"wss://{DOMAIN}/ws/media-stream"
 # * first message
 
 
-# TODO: add validation
-class PhoneNumber(BaseModel):
-    number: str = Field(pattern="[0-9]{10}")
-
-
-class CallIntent(BaseModel):
-    system_message: str
-    voice: str
-    temperature: float
-    opening_message: Optional[str]
-
-
 class MakeCallRequest(BaseModel):
     phone_number: PhoneNumber
-    call_intent: CallIntent
+    # TODO: would be better to pass this in via a database than using hacky twiml code
+    # pros:
+    #   no size limits
+    #   can start realtime session ahead of time
+    #   can calculate statistics on how long different contact points take to answer by time of day etc... to save money
+    # request flow:
+    #   insert call information into the database
+    #   concurrently:
+    #     start openai realtime session
+    #       wait for connection for up to 60s then exit
+    #     make outbound call
+    #       lookup realtime session and wire up passthrough
+    request_b64: Annotated[
+        str,
+        Field(
+            description="base64 encoded request that will be interpreted by our websocket handler once the call has been connected"
+        ),
+    ]
 
 
 class MakeCallResponse(BaseModel):
@@ -70,12 +75,10 @@ class TwilioGateway:
         # All of the rules of TCPA apply even if a call is made by AI.
         # Do your own diligence for compliance.
 
-        request_encoded = pydantic64.encode(request)
-
         # TODO: url needs to match domain + router path, move this stuff over there
         outbound_twiml = (
             f'<?xml version="1.0" encoding="UTF-8"?>'
-            f'<Response><Connect><Stream url="{media_stream_url}"><Parameter name="request" value="{request_encoded}"/></Stream></Connect></Response>'
+            f'<Response><Connect><Stream url="{media_stream_url}"><Parameter name="request" value="{request.request_b64}"/></Stream></Connect></Response>'
         )
 
         call = self._client.calls.create(

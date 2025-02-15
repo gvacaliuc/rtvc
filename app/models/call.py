@@ -2,8 +2,17 @@ from __future__ import annotations
 
 from typing import Annotated, Union, Literal
 from pydantic import AfterValidator, BaseModel, Field
-from jsonschema import Draft7Validator, SchemaError
 from referencing.jsonschema import Schema as JSONSchema
+from .validators import validate_jsonschema
+
+"""
+StartCallRequest:
+  intent
+  behavior
+    personality
+    turn taking
+  output
+"""
 
 
 class CallIntent(BaseModel):
@@ -16,8 +25,22 @@ class CallIntent(BaseModel):
     ]
 
 
-class TurnTaking(BaseModel):
-    value: Union[Wait, SpeakFirst] = Field(discriminator="type")
+class Personality(BaseModel):
+    system_message: Annotated[
+        str, Field(description="Raw system message provided to the audio model.")
+    ]
+    voice: Annotated[
+        str, Field(default="allow", description="The voice used by the audio model.")
+    ] = "alloy"
+    temperature: float = Field(
+        default=0.8,
+        description="High values will result in higher variance responses, lower values will result in more predictability",
+    )
+
+
+class Behavior(BaseModel):
+    personality: Personality
+    turn_taking: Union[Wait, SpeakFirst] = Field(discriminator="type")
 
     class Wait(BaseModel):
         type: Literal["wait"] = "wait"
@@ -29,26 +52,22 @@ class TurnTaking(BaseModel):
             default=_DEFAULT_INITIAL_DELAY,
             description="Delay in seconds before the model speaks",
         )
-
-
-def _validate_jsonschema(schema: JSONSchema) -> JSONSchema:
-    try:
-        Draft7Validator.check_schema(schema)
-    except SchemaError as e:
-        raise ValueError(f"Invalid JSON Schema: {e}")
-    return schema
+        initial_message: str
 
 
 class VoiceCallConfiguration(BaseModel):
     intent: Annotated[
         CallIntent, Field(description="Intent parameters for the voice call.")
     ]
-    turn_taking: Annotated[
-        TurnTaking, Field(description="Turn-taking parameters for the conversation.")
+    behavior: Annotated[
+        Behavior,
+        Field(
+            description="Controls behavior of the audio model, such as when conversation is initiated."
+        ),
     ]
     output_schema: Annotated[
         JSONSchema,
-        AfterValidator(_validate_jsonschema),
+        AfterValidator(validate_jsonschema),
         Field(
             description="A JSONSchema document describing the expected output structure of the call."
         ),

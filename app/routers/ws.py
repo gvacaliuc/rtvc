@@ -8,7 +8,7 @@ import websockets
 
 from app.gateway import twilio
 
-from ..config import OPENAI_API_KEY
+from app.config import OPENAI_API_KEY
 from .. import pydantic64
 
 app = FastAPI()

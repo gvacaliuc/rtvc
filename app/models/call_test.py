@@ -1,23 +1,12 @@
 import pytest
 from pydantic import ValidationError
-from .call import CallIntent, TurnTaking, VoiceCallConfiguration
+from .call import Behavior, CallIntent, Personality, VoiceCallConfiguration
 
 
 def test_call_intent_creation():
     intent = CallIntent(description="Test Call", goal="Ensure validation works")
     assert intent.description == "Test Call"
     assert intent.goal == "Ensure validation works"
-
-
-def test_turn_taking_wait():
-    turn_taking = TurnTaking(value=TurnTaking.Wait())
-    assert turn_taking.value.type == "wait"
-
-
-def test_turn_taking_speak_first():
-    turn_taking = TurnTaking(value=TurnTaking.SpeakFirst(initial_delay=2.5))
-    assert turn_taking.value.type == "speak_first"
-    assert turn_taking.value.initial_delay == 2.5
 
 
 def test_voice_call_configuration_valid():
@@ -31,7 +20,10 @@ def test_voice_call_configuration_valid():
         intent=CallIntent(
             description="Help desk support", goal="Resolve technical issues"
         ),
-        turn_taking=TurnTaking(value=TurnTaking.Wait()),
+        behavior=Behavior(
+            personality=Personality(system_message="talk like a pirate"),
+            turn_taking=Behavior.Wait(),
+        ),
         output_schema=schema,
     )
 
@@ -48,21 +40,29 @@ def test_voice_call_configuration_invalid_schema():
 
     with pytest.raises(ValueError, match="Invalid JSON Schema"):
         VoiceCallConfiguration(
-            intent=CallIntent(description="Test", goal="Test Goal"),
-            turn_taking=TurnTaking(value=TurnTaking.Wait()),
+            intent=CallIntent(
+                description="Help desk support", goal="Resolve technical issues"
+            ),
+            behavior=Behavior(
+                personality=Personality(system_message="talk like a pirate"),
+                turn_taking=Behavior.Wait(),
+            ),
             output_schema=invalid_schema,
         )
 
 
 def test_turn_taking_invalid_variant():
     with pytest.raises(ValidationError):
-        TurnTaking(value={"type": "invalid"})  # type: ignore
+        Behavior(value={"type": "invalid"})  # type: ignore
 
 
 def test_missing_required_fields():
     with pytest.raises(ValidationError):
         VoiceCallConfiguration(
-            turn_taking=TurnTaking(value=TurnTaking.Wait()), output_schema={}
+            behavior=Behavior(
+                personality=Personality(system_message="talk like a pirate"),
+                turn_taking=Behavior.Wait(),
+            ),
         )  # type: ignore
 
 
