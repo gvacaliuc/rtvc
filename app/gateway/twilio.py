@@ -13,10 +13,11 @@ from .. import pydantic64
 media_stream_url = f"wss://{DOMAIN}/ws/media-stream"
 
 # * intent
-    # * system message
-    # * voice
-    # * temperature
-    # * first message
+# * system message
+# * voice
+# * temperature
+# * first message
+
 
 # TODO: add validation
 class PhoneNumber(BaseModel):
@@ -61,7 +62,9 @@ class TwilioGateway:
         number = request.phone_number.number
         is_allowed = await self._check_number_allowed(number)
         if not is_allowed:
-            raise ValueError(f"The number {number} is not recognized as a valid outgoing number or caller ID.")
+            raise ValueError(
+                f"The number {number} is not recognized as a valid outgoing number or caller ID."
+            )
 
         # Ensure compliance with applicable laws and regulations
         # All of the rules of TCPA apply even if a call is made by AI.
@@ -76,9 +79,7 @@ class TwilioGateway:
         )
 
         call = self._client.calls.create(
-            from_=PHONE_NUMBER_FROM,
-            to=number,
-            twiml=outbound_twiml
+            from_=PHONE_NUMBER_FROM, to=number, twiml=outbound_twiml
         )
 
         assert call.sid is not None, "invalid call SID"
@@ -89,9 +90,9 @@ class TwilioGateway:
         """Check if a number is allowed to be called."""
         try:
             # Uncomment these lines to test numbers. Only add numbers you have permission to call
-            # OVERRIDE_NUMBERS = ['+18005551212'] 
-            # if to in OVERRIDE_NUMBERS:             
-              # return True
+            # OVERRIDE_NUMBERS = ['+18005551212']
+            # if to in OVERRIDE_NUMBERS:
+            # return True
 
             incoming_numbers = self._client.incoming_phone_numbers.list(phone_number=to)
             if incoming_numbers:
@@ -131,8 +132,12 @@ async def validate_media_stream(websocket: WebSocket):
 
     if not twilio_signature:
         await websocket.close(code=_WEBSOCKET_POLICY_VIOLATION)
-        raise HTTPException(status_code=_HTTP_BAD_REQUEST, detail="Missing Twilio signature.")
+        raise HTTPException(
+            status_code=_HTTP_BAD_REQUEST, detail="Missing Twilio signature."
+        )
 
     if not _request_validator.validate(url, params, twilio_signature):
         await websocket.close(code=_WEBSOCKET_POLICY_VIOLATION)
-        raise HTTPException(status_code=_HTTP_FORBIDDEN, detail="Invalid Twilio signature.")
+        raise HTTPException(
+            status_code=_HTTP_FORBIDDEN, detail="Invalid Twilio signature."
+        )

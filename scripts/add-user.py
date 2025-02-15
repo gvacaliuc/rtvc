@@ -8,6 +8,7 @@ from getpass import getpass
 ENV_FILE = ".env"
 load_dotenv(ENV_FILE)
 
+
 # Function to add a user to the AUTHN_DATABASE
 def add_user_to_authn_database(username, plaintext_password):
     authn_database = os.getenv("AUTHN_DATABASE", "{}")  # Default to empty JSON
@@ -38,6 +39,7 @@ def add_user_to_authn_database(username, plaintext_password):
     # Update the .env file
     set_key(ENV_FILE, "AUTHN_DATABASE", updated_database)
     print(f"User '{username}' added successfully.")
+
 
 # Example usage
 if __name__ == "__main__":

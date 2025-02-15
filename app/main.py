@@ -7,6 +7,7 @@ app = FastAPI()
 app.mount(path="/ws", app=ws.app)
 app.mount(path="/api/v1", app=api.app)
 
-@app.get('/health', response_class=JSONResponse)
+
+@app.get("/health", response_class=JSONResponse)
 async def healthcheck():
     return {"status": "ok"}

@@ -6,7 +6,11 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.authentication import (
-    AuthCredentials, AuthenticationBackend, AuthenticationError, BaseUser, SimpleUser
+    AuthCredentials,
+    AuthenticationBackend,
+    AuthenticationError,
+    BaseUser,
+    SimpleUser,
 )
 from starlette.requests import HTTPConnection
 from starlette.responses import PlainTextResponse
@@ -16,14 +20,18 @@ import binascii
 
 from .config import users_db
 
+
 class UnauthorizedError(AuthenticationError):
     pass
+
 
 class ForbiddenError(AuthenticationError):
     pass
 
+
 class BasicAuthBackend(AuthenticationBackend):
     _allowed_users: Set[str]
+
     def __init__(self, allowed_users: List[str]):
         self._allowed_users = set(allowed_users)
 
@@ -34,7 +42,7 @@ class BasicAuthBackend(AuthenticationBackend):
         auth = conn.headers["Authorization"]
         try:
             scheme, credentials = auth.split()
-            if scheme.lower() != 'basic':
+            if scheme.lower() != "basic":
                 raise UnauthorizedError("No authentication provided.")
             decoded = base64.b64decode(credentials).decode("ascii")
         except (ValueError, UnicodeDecodeError, binascii.Error):
@@ -52,14 +60,20 @@ class BasicAuthBackend(AuthenticationBackend):
     def on_auth_error(_: HTTPConnection, exc: Exception) -> Response:
         status_code = 401
         match exc:
-            case UnauthorizedError(): status_code = 401
-            case ForbiddenError(): status_code = 403
-            case _: raise AssertionError(f"unrecognized authentication error: {exc}")
+            case UnauthorizedError():
+                status_code = 401
+            case ForbiddenError():
+                status_code = 403
+            case _:
+                raise AssertionError(f"unrecognized authentication error: {exc}")
         return JSONResponse({"error": str(exc)}, status_code=status_code)
+
 
 def _authenticate(username: str, password: str) -> Tuple[AuthCredentials, BaseUser]:
     for cu, cpw in users_db.items():
-        if secrets.compare_digest(cu, username) and bcrypt.checkpw(password.encode(), cpw.encode()):
+        if secrets.compare_digest(cu, username) and bcrypt.checkpw(
+            password.encode(), cpw.encode()
+        ):
             return AuthCredentials([]), SimpleUser(username)
 
     raise UnauthorizedError(f"Invalid credentials.")

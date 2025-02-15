@@ -21,20 +21,26 @@ SYSTEM_MESSAGE = (
 )
 
 # TODO: experiment w/ this
-VOICE = 'alloy'
+VOICE = "alloy"
 
 # TODO: experiment w/ this, i think there is a mini model
-# https://platform.openai.com/docs/models#gpt-4o-realtime 
-MODEL = 'gpt-4o-realtime-preview-2024-12-17'
+# https://platform.openai.com/docs/models#gpt-4o-realtime
+MODEL = "gpt-4o-realtime-preview-2024-12-17"
 
 # TODO: to receive transcripts, collect more
 LOG_EVENT_TYPES = [
-    'error', 'response.content.done', 'rate_limits.updated', 'response.done',
-    'input_audio_buffer.committed', 'input_audio_buffer.speech_stopped',
-    'input_audio_buffer.speech_started', 'session.created'
+    "error",
+    "response.content.done",
+    "rate_limits.updated",
+    "response.done",
+    "input_audio_buffer.committed",
+    "input_audio_buffer.speech_stopped",
+    "input_audio_buffer.speech_started",
+    "session.created",
 ]
 
-@app.websocket('/media-stream')
+
+@app.websocket("/media-stream")
 async def handle_media_stream(websocket: WebSocket):
     """
     Handle WebSocket connections between Twilio and OpenAI.
@@ -56,11 +62,11 @@ async def handle_media_stream(websocket: WebSocket):
         print(f"request: {request}")
 
     async with websockets.connect(
-        f'wss://api.openai.com/v1/realtime?model={MODEL}',
+        f"wss://api.openai.com/v1/realtime?model={MODEL}",
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
-            "OpenAI-Beta": "realtime=v1"
-        }
+            "OpenAI-Beta": "realtime=v1",
+        },
     ) as openai_ws:
         await initialize_session(openai_ws)
         stream_sid = None
@@ -79,15 +85,18 @@ async def handle_media_stream(websocket: WebSocket):
                     # applications shouldn’t check its value. Instead, they
                     # should call recv() or send() and handle ConnectionClosed
                     # exceptions.
-                    if data['event'] == 'media' and openai_ws.state == websockets.State.OPEN:
+                    if (
+                        data["event"] == "media"
+                        and openai_ws.state == websockets.State.OPEN
+                    ):
                         audio_append = {
                             "type": "input_audio_buffer.append",
-                            "audio": data['media']['payload']
+                            "audio": data["media"]["payload"],
                         }
                         await openai_ws.send(json.dumps(audio_append))
-                    elif data['event'] == 'start':
-                        stream_sid = data['start']['streamSid']
-                        custom_parameters = data['start'].get("customParameters")
+                    elif data["event"] == "start":
+                        stream_sid = data["start"]["streamSid"]
+                        custom_parameters = data["start"].get("customParameters")
                         print(f"Incoming stream has started {stream_sid}")
                         print(f"custom parameters: {custom_parameters}")
                         # TODO: we need to initialize the OpenAI session after
@@ -112,26 +121,30 @@ async def handle_media_stream(websocket: WebSocket):
             try:
                 async for openai_message in openai_ws:
                     response = json.loads(openai_message)
-                    if response['type'] in LOG_EVENT_TYPES:
+                    if response["type"] in LOG_EVENT_TYPES:
                         print(f"Received event: {response['type']}", response)
-                    if response['type'] == 'session.updated':
+                    if response["type"] == "session.updated":
                         print("Session updated successfully:", response)
-                    if response['type'] == 'response.audio.delta' and response.get('delta'):
+                    if response["type"] == "response.audio.delta" and response.get(
+                        "delta"
+                    ):
                         try:
-                            audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')
+                            audio_payload = base64.b64encode(
+                                base64.b64decode(response["delta"])
+                            ).decode("utf-8")
                             audio_delta = {
                                 "event": "media",
                                 "streamSid": stream_sid,
-                                "media": {
-                                    "payload": audio_payload
-                                }
+                                "media": {"payload": audio_payload},
                             }
                             await websocket.send_json(audio_delta)
                         except Exception as e:
                             print(f"Error processing audio data: {e}")
             except Exception as e:
                 print(f"Error in send_to_twilio: {e}")
+
         await asyncio.gather(receive_from_twilio(), send_to_twilio())
+
 
 async def send_initial_conversation_item(openai_ws):
     """Send initial conversation so AI talks first."""
@@ -147,13 +160,14 @@ async def send_initial_conversation_item(openai_ws):
                         "Greet the user with 'Hello there! I am an AI voice assistant powered by "
                         "Twilio and the OpenAI Realtime API. You can ask me for facts, jokes, or "
                         "anything you can imagine. How can I help you?'"
-                    )
+                    ),
                 }
-            ]
-        }
+            ],
+        },
     }
     await openai_ws.send(json.dumps(initial_conversation_item))
     await openai_ws.send(json.dumps({"type": "response.create"}))
+
 
 async def initialize_session(openai_ws):
     """Control initial session with OpenAI."""
@@ -168,9 +182,9 @@ async def initialize_session(openai_ws):
             "modalities": ["text", "audio"],
             # TODO: experiment
             "temperature": 0.8,
-        }
+        },
     }
-    print('Sending session update:', json.dumps(session_update))
+    print("Sending session update:", json.dumps(session_update))
     await openai_ws.send(json.dumps(session_update))
 
     # Have the AI speak first

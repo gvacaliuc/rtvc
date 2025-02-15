@@ -1,5 +1,16 @@
 # development
 
+## environment
+
+We use [`uv`](https://astral.sh/uv) to manage our python environment.  The
+python version used is specified in `.python-version`.
+
+## testing
+
+```shell
+make test
+```
+
 ## prerequisites
 
 * OpenAI account
